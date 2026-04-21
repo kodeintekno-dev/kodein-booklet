@@ -6,9 +6,6 @@ export const DEFAULT_SHEET_NAME = "Booklets";
 
 /**
  * Mendapatkan client Google Sheets yang terautentikasi.
- * Aplikasi ini mendukung dua metode autentikasi:
- * 1. Lokal: Menggunakan file keyFile (untuk development).
- * 2. Produksi (Vercel): Menggunakan environment variable GOOGLE_SERVICE_ACCOUNT (JSON string).
  */
 export async function getGoogleSheetsClient() {
   try {
@@ -18,14 +15,27 @@ export async function getGoogleSheetsClient() {
     
     if (serviceAccountVar) {
       // MODE PRODUKSI: Menggunakan JSON string dari env variable
-      const credentials = JSON.parse(serviceAccountVar);
+      // Pembersihan string: Menangani kemungkinan tanda petik atau karakter aneh yang terbawa dari shell
+      const cleanJsonStr = serviceAccountVar.trim().replace(/^['"]|['"]$/g, "");
+      const credentials = JSON.parse(cleanJsonStr);
+      
+      // NORMALISASI: Perbaikan karakter baris baru (\n) yang rusak
+      if (credentials.private_key) {
+        credentials.private_key = credentials.private_key.replace(/\\n/g, "\n");
+        
+        // Memastikan tidak ada \n literal yang masih tertinggal sebagai string "\\n"
+        if (!credentials.private_key.includes("\n") && credentials.private_key.includes("n")) {
+           // Fallback jika replace regex gagal
+           credentials.private_key = credentials.private_key.split("\\n").join("\n");
+        }
+      }
       
       auth = new google.auth.GoogleAuth({
         credentials,
         scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
       });
       
-      console.log("[Sheets API] Using Service Account credentials from Environment Variable");
+      console.log("[Sheets API] Using Service Account credentials from Environment Variable (Hardened)");
     } else {
       // MODE LOKAL: Mencari file fisik .json
       auth = new google.auth.GoogleAuth({
