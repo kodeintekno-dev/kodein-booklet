@@ -1,54 +1,49 @@
 import { google } from "googleapis";
 
-// Configuration for Google Sheets
+// Configuration for Google Sheets - Strictly Environment Driven
 export const SHEET_ID = process.env.GOOGLE_SHEET_ID;
-export const DEFAULT_SHEET_NAME = "Booklets";
+export const DEFAULT_SHEET_NAME = process.env.GOOGLE_SHEET_NAME || "Booklets";
 
 /**
  * Mendapatkan client Google Sheets yang terautentikasi.
+ * Menggunakan individual environment variables untuk keamanan dan kemudahan konfigurasi.
  */
 export async function getGoogleSheetsClient() {
-  try {
-    const serviceAccountVar = process.env.GOOGLE_SERVICE_ACCOUNT;
-    
-    let auth;
-    
-    if (serviceAccountVar) {
-      // MODE PRODUKSI: Menggunakan JSON string dari env variable
-      // Pembersihan string: Menangani kemungkinan tanda petik atau karakter aneh yang terbawa dari shell
-      const cleanJsonStr = serviceAccountVar.trim().replace(/^['"]|['"]$/g, "");
-      const credentials = JSON.parse(cleanJsonStr);
-      
-      // NORMALISASI: Perbaikan karakter baris baru (\n) yang rusak
-      if (credentials.private_key) {
-        credentials.private_key = credentials.private_key.replace(/\\n/g, "\n");
-        
-        // Memastikan tidak ada \n literal yang masih tertinggal sebagai string "\\n"
-        if (!credentials.private_key.includes("\n") && credentials.private_key.includes("n")) {
-           // Fallback jika replace regex gagal
-           credentials.private_key = credentials.private_key.split("\\n").join("\n");
-        }
-      }
-      
-      auth = new google.auth.GoogleAuth({
-        credentials,
-        scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-      });
-      
-      console.log("[Sheets API] Using Service Account credentials from Environment Variable (Hardened)");
-    } else {
-      // MODE LOKAL: Mencari file fisik .json
-      auth = new google.auth.GoogleAuth({
-        keyFile: "kodein-school-b19ce657123b.json",
-        scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-      });
-      
-      console.log("[Sheets API] Using local keyFile authentication");
-    }
+  const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY;
+  const projectId = process.env.GOOGLE_PROJECT_ID;
 
+  // Validasi keberadaan environment variables secara ketat
+  if (!clientEmail || !privateKey || !projectId) {
+    throw new Error(
+      "[Sheets API] Missing required environment variables: " +
+      (!clientEmail ? "GOOGLE_CLIENT_EMAIL " : "") +
+      (!privateKey ? "GOOGLE_PRIVATE_KEY " : "") +
+      (!projectId ? "GOOGLE_PROJECT_ID" : "")
+    );
+  }
+
+  try {
+    // Konfigurasi Auth menggunakan individual credentials dari .env
+    // Normalisasi Private Key: Menangani berbagai kemungkinan escaping \n di environment variables
+    const formattedKey = privateKey
+      .replace(/\\n/g, "\n")       // Ganti literal \n (backslash + n) menjadi newline asli
+      .replace(/['"]/g, "")        // Hapus tanda petik (single/double) jika terbawa dari .env
+      .trim();                     // Hapus whitespace di awal/akhir
+
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: clientEmail,
+        private_key: formattedKey,
+        project_id: projectId,
+      },
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    });
+
+    console.log("[Sheets API] Authenticated using environment variables");
     return google.sheets({ version: "v4", auth });
   } catch (error) {
-    console.error("[Sheets Architecture Error] Authentication failed:", error);
+    console.error("[Sheets API] Authentication failed:", error);
     throw error;
   }
 }
