@@ -33,7 +33,7 @@ export default async function BookletPage({
   }
 
   const months = response.months || [];
-  const activeMonth = selectedMonth || months[0] || "";
+  const activeMonth = selectedMonth || (months.length > 0 ? months[months.length - 1] : "");
 
   const items = Object.values(response.data)
     .flat()
@@ -46,18 +46,36 @@ export default async function BookletPage({
     .filter((item) => item.url && item.url !== "#");
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 font-sans px-4 pt-10 pb-32 max-w-md mx-auto shadow-sm">
-      <header className="mb-8 text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl shadow-lg shadow-slate-200 mb-2 overflow-hidden border-4 border-white">
-          <img 
-            src="/logo-kodein.jpg" 
-            alt="Logo Kodein" 
-            className="w-full h-full object-contain p-2"
-          />
-        </div>
-        <div className="space-y-1">
-          <h1 className="text-2xl font-black tracking-tighter text-slate-900 uppercase">Booklet Portofolio</h1>
-          <p className="text-[10px] font-bold text-primary/80 uppercase tracking-[0.3em]">Laporan Progres Siswa</p>
+    <div className="w-full min-h-screen bg-slate-50 font-sans px-4 pt-0 pb-32 max-w-md mx-auto shadow-sm">
+      <header className="relative mb-10 pt-10 px-4 text-center">
+        {/* Subtle Accent */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
+        
+        <div className="space-y-6">
+          <div className="relative inline-block">
+             <div className="w-24 h-24 bg-white rounded-[2rem] shadow-sm border border-slate-100 p-4 transition-transform hover:scale-105 duration-300">
+                <img 
+                  src="/logo-kodein.jpg" 
+                  alt="Logo Kodein" 
+                  className="w-full h-full object-contain"
+                />
+             </div>
+             {/* Small visual accent beneath logo */}
+             <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary rounded-full border-4 border-slate-50 flex items-center justify-center">
+                <GraduationCap className="w-4 h-4 text-white" />
+             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase leading-none">
+              Booklet Portofolio
+            </h1>
+            <div className="inline-flex items-center px-3 py-1 bg-slate-100 rounded-full">
+               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
+                 Laporan Progres Siswa
+               </span>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -66,7 +84,7 @@ export default async function BookletPage({
       <div className="mt-10 mb-6">
         <div className="flex items-center gap-2 mb-4 px-1">
           <div className="w-1 h-4 bg-primary rounded-full" />
-          <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider">Silakan Cari Nama Anak</h2>
+          <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider">Silakan Cari Nama Siswa</h2>
         </div>
 
         {items.length === 0 ? (
@@ -85,26 +103,26 @@ export default async function BookletPage({
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col p-5 bg-white rounded-[1.5rem] border-b-4 border-slate-200 active:border-b-0 active:translate-y-1 hover:border-primary/30 transition-all duration-200 shadow-sm"
+                className="group flex flex-col p-5 bg-white rounded-[1.8rem] border border-slate-100 active:scale-[0.98] transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="space-y-1">
-                    <span className="block text-[10px] font-black text-primary uppercase tracking-widest opacity-70">
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       Kelas {item.class}
                     </span>
                     <h3 className="text-lg font-extrabold text-slate-900 leading-tight">
                       {item.name}
                     </h3>
                   </div>
-                  <div className="p-2 bg-slate-50 rounded-lg group-hover:bg-primary/10 transition-colors">
-                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-primary" />
+                  <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-primary/10 transition-colors">
+                    <ExternalLink className="w-4 h-4 text-slate-300 group-hover:text-primary" />
                   </div>
                 </div>
                 
                 <div className="flex items-center justify-between pt-3 border-t border-slate-50">
                    <div className="flex items-center gap-2">
-                     <div className="w-2 h-2 bg-green-500 rounded-full" />
-                     <span className="text-[11px] font-bold text-slate-400 uppercase">Laporan Siap Dilihat</span>
+                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                     <span className="text-[11px] font-medium text-slate-400 uppercase">Laporan Tersedia</span>
                    </div>
                    <span className="text-[11px] font-black text-primary uppercase group-hover:translate-x-1 transition-transform flex items-center gap-1">
                       Buka Booklet
